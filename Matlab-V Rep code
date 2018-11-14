@@ -1,0 +1,166 @@
+vrep=remApi('remoteApi');
+vrep.simxFinish(-1);
+clientID=vrep.simxStart('127.0.0.1',19997,true,true,5000,5);
+if (clientID>-1)
+disp('Connected to remote API server');
+
+%Initializing the handles
+[ret,Vision_sensor]=vrep.simxGetObjectHandle(clientID,'Vision_sensor',vrep.simx_opmode_blocking);
+[ret,Revolute]=vrep.simxGetObjectHandle(clientID,'Revolute_joint',vrep.simx_opmode_blocking);
+[ret,Prismatic]=vrep.simxGetObjectHandle(clientID,'Prismatic_joint',vrep.simx_opmode_blocking);
+[ret,Distance]=vrep.simxGetObjectHandle(clientID,'Proximity_sensor',vrep.simx_opmode_blocking);
+[ret,Revolute1]=vrep.simxGetObjectHandle(clientID,'Revolute_joint0',vrep.simx_opmode_blocking);
+
+
+%for input choice
+red   = 1;
+green = 2;
+blue  = 3;
+
+%request input from user
+promt = 'Choose the color to be picked = ';
+color = input(promt);
+
+%if the desired color is red
+if color==red
+    %image processing
+    vrep.simxGetVisionSensorImage2(clientID,Vision_sensor,0,vrep.simx_opmode_streaming);
+    [ret,resolution,Image]=vrep.simxGetVisionSensorImage2(clientID,Vision_sensor,0,vrep.simx_opmode_oneshot_wait);
+    a=Image;
+    redball=a(:,:,1)
+    imshow(redball)
+    Rmin = 8;
+    Rmax = 13;[centersBright, radiiBright,metricBright] = imfindcircles(redball,[Rmin Rmax],'ObjectPolarity','bright','Sensitivity',0.95,'EdgeThreshold',0.1);
+    hBright = viscircles(centersBright, radiiBright,'EdgeColor','b');
+    y11= centersBright(1);
+
+    %calcuating the coordinates
+    y1=(257.3-y11)/(443);
+    x1=1;
+    d11=(sqrt((x1^2)+(y1^2)));
+    d1=d11-0.19;
+    o11=y1/d11;
+    theta1=asin(o11);
+    
+    %actuate the joints and check the distance
+    loop=1;
+    while loop<2%(clientID~=-1)
+        ret = vrep.simxSetJointTargetPosition(clientID,Revolute,theta1,vrep.simx_opmode_oneshot_wait);
+        pause(1)
+        [ret,handle]=vrep.simxGetObjectHandle(clientID,'Proximity_sensor',vrep.simx_opmode_blocking);
+        [ret,detectionState,detectedPoint,detectedObjectHandle,detectedSurfaceNormalVector]=vrep.simxReadProximitySensor(clientID,handle,vrep.simx_opmode_oneshot_wait);
+        d111=detectedPoint(3);
+        if d111 ~= d1
+            ret = vrep.simxSetJointTargetPosition(clientID,Prismatic,d1,vrep.simx_opmode_oneshot_wait);
+        else
+             display('Error')
+    end
+    loop=loop+1;
+end
+%Get the new joint angle
+[ret,o1]=vrep.simxGetJointPosition(clientID,Revolute,vrep.simx_opmode_buffer);
+[ret,d1]=vrep.simxGetJointPosition(clientID,Prismatic,vrep.simx_opmode_buffer);
+
+%if the color is green
+elseif color==green
+    vrep.simxGetVisionSensorImage2(clientID,Vision_sensor,0,vrep.simx_opmode_streaming);
+    [ret,resolution,Image]=vrep.simxGetVisionSensorImage2(clientID,Vision_sensor,0,vrep.simx_opmode_oneshot_wait);
+    a=Image;
+    greenball=a(:,:,2)
+    imshow(greenball)
+    Rmin = 8;
+    Rmax = 13;
+    [centersBright, radiiBright,metricBright] = imfindcircles(greenball,[Rmin Rmax],'ObjectPolarity','bright','Sensitivity',0.95,'EdgeThreshold',0.1);
+    hBright = viscircles(centersBright, radiiBright,'EdgeColor','b');
+    y22= centersBright(1);
+
+    y2=(257.3-y22)/(443);
+    x2=1;
+    d22=(sqrt((x2^2)+(y2^2)));
+    d2=d22-0.19;
+    o22=y2/d22;
+    theta1=asin(o22);
+
+    loop=1;
+    while loop<2%(clientID~=-1)
+        ret = vrep.simxSetJointTargetPosition(clientID,Revolute,theta1,vrep.simx_opmode_oneshot_wait);
+        pause(1)
+        [ret,handle]=vrep.simxGetObjectHandle(clientID,'Proximity_sensor',vrep.simx_opmode_blocking);
+        [ret,detectionState,detectedPoint,detectedObjectHandle,detectedSurfaceNormalVector]=vrep.simxReadProximitySensor(clientID,handle,vrep.simx_opmode_oneshot_wait);
+        d222=detectedPoint(3);
+        if d222 ~= d2
+            ret = vrep.simxSetJointTargetPosition(clientID,Prismatic,d2,vrep.simx_opmode_oneshot_wait);
+        else
+            display('Error')
+        end
+        loop=loop+1;
+    end
+    
+    %Get the new jiont angle
+    [ret,o2]=vrep.simxGetJointPosition(clientID,Revolute,vrep.simx_opmode_buffer);
+    [ret,d2]=vrep.simxGetJointPosition(clientID,Prismatic,vrep.simx_opmode_buffer);
+
+elseif color==blue
+    vrep.simxGetVisionSensorImage2(clientID,Vision_sensor,0,vrep.simx_opmode_streaming);
+    [ret,resolution,Image]=vrep.simxGetVisionSensorImage2(clientID,Vision_sensor,0,vrep.simx_opmode_oneshot_wait);
+    a=Image;
+    blueball=a(:,:,3)
+    imshow(blueball)
+    Rmin = 8;
+    Rmax = 13;
+    [centersBright, radiiBright,metricBright] = imfindcircles(blueball,[Rmin Rmax],'ObjectPolarity','bright','Sensitivity',0.95,'EdgeThreshold',0.1);
+    hBright = viscircles(centersBright, radiiBright,'EdgeColor','b');
+    y33= centersBright(1);
+
+    y3=(257.3-y33)/(443);
+    x3=1;
+    d33=(sqrt((x3^2)+(y3^2)));
+    d3=d33-0.19;
+    o33=y3/d33;
+    theta3=asin(o33);
+
+    loop=1;
+    while loop<2%(clientID~=-1)
+        ret = vrep.simxSetJointTargetPosition(clientID,Revolute,theta3,vrep.simx_opmode_oneshot_wait);
+        pause(1)
+        [ret,handle]=vrep.simxGetObjectHandle(clientID,'Proximity_sensor',vrep.simx_opmode_blocking);
+        [ret,detectionState,detectedPoint,detectedObjectHandle,detectedSurfaceNormalVector]=vrep.simxReadProximitySensor(clientID,handle,vrep.simx_opmode_oneshot_wait);
+        d333=detectedPoint(3);
+        if d333 ~= d3
+            ret = vrep.simxSetJointTargetPosition(clientID,Prismatic,d3,vrep.simx_opmode_oneshot_wait);
+        else
+            display('Error')
+        end
+        loop=loop+1;
+    end
+    
+    %Get the new jiont angle
+    [ret,o3]=vrep.simxGetJointPosition(clientID,Revolute,vrep.simx_opmode_buffer);
+    [ret,d3]=vrep.simxGetJointPosition(clientID,Prismatic,vrep.simx_opmode_buffer);
+
+else
+    display('Choose the right color');
+end
+
+[ret,BaxterVaccumCup]=vrep.simxGetObjectHandle(clientID,'BaxterVaccumCup',vrep.simx_opmode_blocking);
+vrep.simxSetIntegerSignal(clientID,'BaxterVaccumCup_active',1,vrep.simx_opmode_oneshot);
+pause(7)
+[ret,BaxterGripper]=vrep.simxGetObjectHandle(clientID,'BaxterGripper',vrep.simx_opmode_blocking);
+vrep.simxSetIntegerSignal(clientID,'BaxterGripper_close',1,vrep.simx_opmode_oneshot_wait);
+
+%theta2=-80;
+%ret = vrep.simxSetJointTargetPosition(clientID,Revolute1,theta2,vrep.simx_opmode_oneshot_wait);
+%[ret,theta2]=vrep.simxGetJointPosition(clientID,Revolute1,vrep.simx_opmode_buffer);
+%pause(2)
+%vrep.simxSetIntegerSignal(clientID,'BaxterGripper_close',1,vrep.simx_opmode_oneshot);
+%pause(1)
+%theta3=0;
+%ret = vrep.simxSetJointTargetPosition(clientID,Revolute1,theta3,vrep.simx_opmode_oneshot_wait);
+%[ret,theta3]=vrep.simxGetJointPosition(clientID,Revolute1,vrep.simx_opmode_buffer);
+%theta4=0;
+%ret = vrep.simxSetJointTargetPosition(clientID,Revolute,theta3,vrep.simx_opmode_oneshot_wait);
+%[ret,theta4]=vrep.simxGetJointPosition(clientID,Revolute,vrep.simx_opmode_buffer);
+
+vrep.simxFinish(clientID);
+end
+vrep.delete();     
