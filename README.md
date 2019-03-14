@@ -4,7 +4,8 @@ Project - Autonomous Object Picker
 Goal: To designed a Robotics Arm to Pick a desired colored object in a simulated environment decided by the user
 
 Topic: Robotics- Kinematics and Dynamics of Robtic Arm
-Software: V-Rep, Matlab
+
+Software: V-Rep, Matlab, URDF
 
 Implementation:
   * MATLAB and V-Rep are interfaced using Remote API for serial communication
